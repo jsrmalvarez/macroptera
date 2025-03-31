@@ -15,6 +15,11 @@ services:
       - ./init:/docker-entrypoint-initdb.d
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build: 
