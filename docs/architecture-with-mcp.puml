@@ -1,0 +1,75 @@
+@startuml CRUD-Application-Architecture-with-MCP
+
+skinparam backgroundColor white
+skinparam defaultTextAlignment center
+
+title CRUD Application Architecture with MCP Server for LLM Integration
+
+package "Docker Environment" as DockerEnv {
+  rectangle "LLM Service" as LLM {
+    [Language Model]
+  }
+  
+  node "MCP Server Container" as MCPContainer {
+    rectangle "Model Context Protocol Server\n(Port 5000)" as MCPServer {
+      [API Gateway] as MCPGateway
+      [State Manager] as StateManager
+      [Function Calling Handler] as FunctionHandler
+      
+      MCPGateway --> StateManager
+      MCPGateway --> FunctionHandler
+    }
+  }
+  
+  node "Frontend Container" as FrontendContainer {
+    rectangle "React Application\n(Port 3000)" as ReactApp {
+      [App Component] as AppComponent
+      [ItemForm Component] as ItemFormComponent
+      [ItemsList Component] as ItemsListComponent
+      [ItemEditModal Component] as EditModalComponent
+      
+      AppComponent --> ItemFormComponent
+      AppComponent --> ItemsListComponent
+      ItemsListComponent --> EditModalComponent
+    }
+    
+    rectangle "Chakra UI" as ChakraUI 
+    ReactApp ..> ChakraUI : uses
+  }
+  
+  node "Backend Container" as BackendContainer {
+    rectangle "FastAPI Application\n(Port 8000)" as FastAPI {
+      [API Endpoints] as APIEndpoints
+      [Pydantic Schemas] as Schemas
+      [SQLAlchemy Models] as Models
+      
+      APIEndpoints --> Schemas : validates data with
+      APIEndpoints --> Models : interacts with
+    }
+  }
+  
+  database "MariaDB Container\n(Port 3306)" as MariaDB {
+    [items table] as ItemsTable
+  }
+  
+  ' Define interactions between containers
+  LLM -down-> MCPServer : Sends prompts and\nreceives responses
+  MCPServer -down-> FastAPI : Calls API functions\n(HTTP Requests)
+  ReactApp -right-> FastAPI : HTTP Requests (Axios)
+  FastAPI -right-> MariaDB : SQL Queries (SQLAlchemy ORM)
+}
+
+' Legend
+legend right
+  <b>Stack Components:</b>
+  LLM Service: Large Language Model that controls the application
+  MCP Server: Model Context Protocol Server for LLM integration
+  Frontend UI: React & Components
+  UI Component Library: Chakra UI
+  Backend Framework: FastAPI
+  Database ORM: SQLAlchemy
+  SQL Database: MariaDB
+  Containerization: Docker
+endlegend
+
+@enduml

@@ -1,0 +1,76 @@
+@startuml MCP-Data-Flow
+
+skinparam backgroundColor white
+skinparam defaultTextAlignment center
+
+title Model Context Protocol (MCP) Data Flow
+
+actor "Human User" as human
+participant "LLM Service" as llm
+participant "MCP Server" as mcp
+participant "FastAPI Backend" as api
+database "MariaDB" as db
+
+== LLM Querying Items ==
+human -> llm : "Show me all active items"
+llm -> mcp : Request items with filter: is_active=true
+activate mcp
+mcp -> api : GET /api/items/?is_active=true
+activate api
+api -> db : SELECT * FROM items WHERE is_active = 1
+db --> api : Return filtered items
+api --> mcp : JSON response with items
+deactivate api
+mcp --> llm : Formatted items data
+deactivate mcp
+llm --> human : "Here are the active items: [formatted list]"
+
+== LLM Creating an Item ==
+human -> llm : "Create a new item called 'Meeting Notes'"
+llm -> mcp : Create item function call
+activate mcp
+mcp -> api : POST /api/items/
+activate api
+api -> db : INSERT INTO items
+db --> api : Return new item
+api --> mcp : JSON response with created item
+deactivate api
+mcp --> llm : Confirmation of item creation
+deactivate mcp
+llm --> human : "I've created the 'Meeting Notes' item for you"
+
+== LLM Updating an Item ==
+human -> llm : "Change the status of Meeting Notes to inactive"
+llm -> mcp : Update item function call
+activate mcp
+mcp -> api : GET /api/items/ (to find the item)
+api --> mcp : List of items
+mcp -> mcp : Find item with title "Meeting Notes"
+mcp -> api : PUT /api/items/{id}
+activate api
+api -> db : UPDATE items SET is_active = 0 WHERE id = ?
+db --> api : Return updated item
+api --> mcp : JSON response with updated item
+deactivate api
+mcp --> llm : Confirmation of status change
+deactivate mcp
+llm --> human : "I've changed 'Meeting Notes' to inactive"
+
+== LLM Deleting an Item ==
+human -> llm : "Delete the Meeting Notes item"
+llm -> mcp : Delete item function call
+activate mcp
+mcp -> api : GET /api/items/ (to find the item)
+api --> mcp : List of items
+mcp -> mcp : Find item with title "Meeting Notes"
+mcp -> api : DELETE /api/items/{id}
+activate api
+api -> db : DELETE FROM items WHERE id = ?
+db --> api : Confirm deletion
+api --> mcp : 204 No Content
+deactivate api
+mcp --> llm : Confirmation of deletion
+deactivate mcp
+llm --> human : "I've deleted the 'Meeting Notes' item"
+
+@enduml
