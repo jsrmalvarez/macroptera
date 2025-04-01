@@ -16,10 +16,10 @@ import {
   FormErrorMessage,
   useToast
 } from '@chakra-ui/react';
-import axios from 'axios';
 
 const ItemEditModal = ({ isOpen, onClose, item, onUpdate }) => {
   const [formData, setFormData] = useState({
+    id: '',
     title: '',
     description: '',
     is_active: true
@@ -28,13 +28,13 @@ const ItemEditModal = ({ isOpen, onClose, item, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
-  // Update form data when item changes
   useEffect(() => {
     if (item) {
       setFormData({
-        title: item.title || '',
+        id: item.id,
+        title: item.title,
         description: item.description || '',
-        is_active: item.is_active || false
+        is_active: item.is_active
       });
     }
   }, [item]);
@@ -56,30 +56,21 @@ const ItemEditModal = ({ isOpen, onClose, item, onUpdate }) => {
     });
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm() || !item) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
       return;
     }
     
     setIsSubmitting(true);
     try {
-      const response = await axios.put(`http://localhost:8000/api/items/${item.id}`, formData);
-      toast({
-        title: 'Item updated',
-        description: `${response.data.title} has been successfully updated`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-      
-      // Call the update handler with updated item
-      onUpdate(response.data);
-      
+      await onUpdate(formData);
     } catch (error) {
       console.error('Error updating item:', error);
       toast({
         title: 'Error updating item',
-        description: error.response?.data?.detail || error.message,
+        description: error.message || 'An unexpected error occurred',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -95,52 +86,61 @@ const ItemEditModal = ({ isOpen, onClose, item, onUpdate }) => {
       <ModalContent>
         <ModalHeader>Edit Item</ModalHeader>
         <ModalCloseButton />
-        <ModalBody pb={6}>
-          <FormControl isRequired isInvalid={!!errors.title} mb={4}>
-            <FormLabel>Title</FormLabel>
-            <Input
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="Enter item title"
-            />
-            {errors.title && <FormErrorMessage>{errors.title}</FormErrorMessage>}
-          </FormControl>
+        <ModalBody>
+          <form id="edit-item-form" onSubmit={handleSubmit}>
+            <FormControl isRequired isInvalid={!!errors.title} mb={4}>
+              <FormLabel>Title</FormLabel>
+              <Input
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Enter item title"
+              />
+              {errors.title && <FormErrorMessage>{errors.title}</FormErrorMessage>}
+            </FormControl>
 
-          <FormControl mb={4}>
-            <FormLabel>Description</FormLabel>
-            <Textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Enter item description (optional)"
-              resize="vertical"
-            />
-          </FormControl>
+            <FormControl mb={4}>
+              <FormLabel>Description</FormLabel>
+              <Textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Enter item description (optional)"
+                resize="vertical"
+              />
+            </FormControl>
 
-          <FormControl display="flex" alignItems="center" mb={4}>
-            <FormLabel htmlFor="edit-is-active" mb="0">
-              Active
-            </FormLabel>
-            <Switch
-              id="edit-is-active"
-              name="is_active"
-              isChecked={formData.is_active}
-              onChange={handleInputChange}
-            />
-          </FormControl>
+            <FormControl display="flex" alignItems="center" mb={4}>
+              <FormLabel htmlFor="edit-is-active" mb="0">
+                Active
+              </FormLabel>
+              <Switch
+                id="edit-is-active"
+                name="is_active"
+                isChecked={formData.is_active}
+                onChange={handleInputChange}
+              />
+            </FormControl>
+          </form>
         </ModalBody>
 
         <ModalFooter>
           <Button 
-            colorScheme="blue" 
+            variant="ghost" 
             mr={3} 
-            onClick={handleSubmit}
-            isLoading={isSubmitting}
+            onClick={onClose}
           >
-            Save
+            Cancel
           </Button>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button 
+            form="edit-item-form"
+            type="submit"
+            colorScheme="blue"
+            isLoading={isSubmitting}
+            loadingText="Updating"
+          >
+            Update
+          </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

@@ -13,9 +13,8 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { AddIcon } from '@chakra-ui/icons';
-import axios from 'axios';
 
-const ItemForm = () => {
+const ItemForm = ({ onAddItem }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -51,10 +50,10 @@ const ItemForm = () => {
     
     setIsSubmitting(true);
     try {
-      const response = await axios.post('http://localhost:8000/api/items/', formData);
+      const response = await onAddItem(formData);
       toast({
         title: 'Item created',
-        description: `${response.data.title} has been successfully added`,
+        description: `${response.title} has been successfully added`,
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -66,9 +65,6 @@ const ItemForm = () => {
         description: '',
         is_active: true
       });
-      
-      // Refresh items list (you might want to implement this differently)
-      window.dispatchEvent(new CustomEvent('refreshItems'));
       
     } catch (error) {
       console.error('Error creating item:', error);

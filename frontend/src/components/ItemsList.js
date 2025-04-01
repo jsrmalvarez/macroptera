@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Table,
@@ -15,41 +15,17 @@ import {
   Badge
 } from '@chakra-ui/react';
 import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
-import axios from 'axios';
 import ItemEditModal from './ItemEditModal';
 
-const ItemsList = () => {
-  const [items, setItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+const ItemsList = ({ items, isLoading, onDeleteItem, onUpdateItem }) => {
   const [editItem, setEditItem] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const toast = useToast();
-  
-  // Fetch items from API
-  const fetchItems = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get('http://localhost:8000/api/items/');
-      setItems(response.data);
-    } catch (error) {
-      console.error('Error fetching items:', error);
-      toast({
-        title: 'Error fetching items',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  // Delete an item
+  // Handle delete
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/api/items/${id}`);
-      setItems(items.filter(item => item.id !== id));
+      await onDeleteItem(id);
       toast({
         title: 'Item deleted',
         description: "Item has been successfully deleted",
@@ -76,16 +52,21 @@ const ItemsList = () => {
   };
 
   // Handle item update
-  const handleItemUpdate = (updatedItem) => {
-    setItems(items.map(item => 
-      item.id === updatedItem.id ? updatedItem : item
-    ));
-    setIsEditModalOpen(false);
+  const handleItemUpdate = async (updatedItem) => {
+    try {
+      await onUpdateItem(updatedItem.id, updatedItem);
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error('Error updating item:', error);
+      toast({
+        title: 'Error updating item',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
-
-  useEffect(() => {
-    fetchItems();
-  }, []);
 
   return (
     <Box p={5} shadow="md" borderWidth="1px" borderRadius="md">
