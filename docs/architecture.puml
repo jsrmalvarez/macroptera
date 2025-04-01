@@ -1,0 +1,64 @@
+@startuml CRUD-Application-Architecture
+
+skinparam backgroundColor white
+skinparam defaultTextAlignment center
+
+title CRUD Application Architecture
+
+' Define custom colors
+!define REACT_COLOR #61DAFB
+!define CHAKRA_COLOR #319795
+!define FASTAPI_COLOR #009485
+!define SQLALCHEMY_COLOR #D71F00
+!define MARIADB_COLOR #003545
+!define DOCKER_COLOR #2496ED
+
+package "Docker Environment" as DockerEnv {
+  node "Frontend Container" as FrontendContainer {
+    rectangle "React Application\n(Port 3000)" as ReactApp {
+      [App Component] as AppComponent
+      [ItemForm Component] as ItemFormComponent
+      [ItemsList Component] as ItemsListComponent
+      [ItemEditModal Component] as EditModalComponent
+      
+      AppComponent --> ItemFormComponent
+      AppComponent --> ItemsListComponent
+      ItemsListComponent --> EditModalComponent
+    }
+    
+    rectangle "Chakra UI" as ChakraUI 
+    ReactApp ..> ChakraUI : uses
+  }
+  
+  node "Backend Container" as BackendContainer {
+    rectangle "FastAPI Application\n(Port 8000)" as FastAPI {
+      [API Endpoints] as APIEndpoints
+      [Pydantic Schemas] as Schemas
+      [SQLAlchemy Models] as Models
+      
+      APIEndpoints --> Schemas : validates data with
+      APIEndpoints --> Models : interacts with
+    }
+  }
+  
+  database "MariaDB Container\n(Port 3306)" as MariaDB {
+    [items table] as ItemsTable
+  }
+  
+  ' Define interactions between containers
+  ReactApp -right-> FastAPI : HTTP Requests (Axios)
+  FastAPI -right-> MariaDB : SQL Queries (SQLAlchemy ORM)
+}
+
+' Legend
+legend right
+  <b>Stack Components:</b>
+  Frontend UI: React & Components
+  UI Component Library: Chakra UI
+  Backend Framework: FastAPI
+  Database ORM: SQLAlchemy
+  SQL Database: MariaDB
+  Containerization: Docker
+endlegend
+
+@enduml

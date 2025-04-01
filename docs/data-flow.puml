@@ -1,0 +1,45 @@
+@startuml CRUD Data Flow
+
+skinparam backgroundColor white
+skinparam defaultTextAlignment center
+
+title CRUD Application Data Flow
+
+actor "User" as user
+boundary "React Frontend" as frontend
+control "FastAPI Backend" as backend
+database "MariaDB" as db
+
+== Create Operation ==
+user -> frontend : Enter item details
+frontend -> backend : POST /api/items/
+backend -> db : INSERT INTO items
+db --> backend : Return new item
+backend --> frontend : Return item with ID
+frontend --> user : Show success toast
+
+== Read Operation ==
+user -> frontend : Load application
+frontend -> backend : GET /api/items/
+backend -> db : SELECT * FROM items
+db --> backend : Return items
+backend --> frontend : Return items array
+frontend --> user : Display items list
+
+== Update Operation ==
+user -> frontend : Edit item
+frontend -> backend : PUT /api/items/{id}
+backend -> db : UPDATE items SET ... WHERE id = ?
+db --> backend : Return updated item
+backend --> frontend : Return updated item
+frontend --> user : Show success toast
+
+== Delete Operation ==
+user -> frontend : Click delete button
+frontend -> backend : DELETE /api/items/{id}
+backend -> db : DELETE FROM items WHERE id = ?
+db --> backend : Confirm deletion
+backend --> frontend : 204 No Content
+frontend --> user : Remove item from list + show success toast
+
+@enduml
